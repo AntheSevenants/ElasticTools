@@ -117,7 +117,7 @@ class Dataset:
 
 		for other_column in self.other_columns:
 			if self.other_column_info[other_column]["is_binary"]:
-				feature_list.append(f"is_{other_column}")
+				feature_list.append(f"is_{self.other_column_info[other_column]['reference_value']}")
 			else:
 				feature_list.append(other_column)
 
