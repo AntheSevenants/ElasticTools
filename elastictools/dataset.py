@@ -9,7 +9,7 @@ class Dataset:
 		self.check_column_exists(response_variable_column)
 		self.check_column_exists(to_binary_column)
 		
-		# We check wehther the response variable column is binary
+		# We check whether the response variable column is binary
 		self.check_column_is_binary(response_variable_column)
 
 		# We need to binarise all values of the to_binary column
