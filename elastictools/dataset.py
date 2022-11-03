@@ -2,8 +2,22 @@ import pandas as pd
 import numpy as np
 
 class Dataset:
-	def __init__(self, df):
+	def __init__(self, df, response_variable_column, to_binary_column, other_columns=[]):
 		self.df = df
+
+		# We check for the response variable and to binary columns whether they are present
+		self.check_column_exists(response_variable_column)
+		self.check_column_exists(to_binary_column)
+		
+		# We check wehther the response variable column is binary
+		self.check_column_is_binary(response_variable_column)
+
+		# We need to binarise all values of the to_binary column
+		# So we check in advance what features there will be
+		self.context_features = self.df[to_binary_column].unique().tolist()
+
+		self.response_variable_column = response_variable_column
+		self.to_binary_column = to_binary_column
 
 	def check_column_exists(self, column):
 		if not column in self.df.columns:
@@ -17,14 +31,8 @@ class Dataset:
 		elif len(values) > 2:
 			raise Exception(f"Column '{column} contains more than two unique values")
 
-	def as_matrix(self, response_variable_column, to_binary_column, other_columns=[],
-						response_variable_1_value=None):
-		# We check for the response variable and to binary columns whether they are present
-		self.check_column_exists(response_variable_column)
-		self.check_column_exists(to_binary_column)
-
-		self.check_column_is_binary(response_variable_column)
-		response_variable_values = self.df[response_variable_column].unique()
+	def as_matrix(self, response_variable_1_value=None):
+		response_variable_values = self.df[self.response_variable_column].unique()
 
 		# We check whether the presupplied reference "1" value actually appears in the data
 		if response_variable_1_value is not None:
@@ -34,9 +42,7 @@ class Dataset:
 			# We use the last value as reference "1" value
 			response_variable_1_value = response_variable_values[1]
 
-		# We need to binarise all values of the to_binary column
-		# So we check in advance how many features there will be
-		self.context_features = self.df[to_binary_column].unique().tolist()
+		# What is the total number of features?
 		context_feature_count = len(self.context_features)
 
 		# The total features consists of...
@@ -51,7 +57,7 @@ class Dataset:
 
 		# We go over each row and check what the value is for the to_binary column
 		for row_index, row in self.df.iterrows():
-			to_binary_value = row[to_binary_column]
+			to_binary_value = row[self.to_binary_column]
 
 			# We check what the index of this value is in the context features list
 			# This index corresponds to the index of the column of this value in the matrix
@@ -62,7 +68,7 @@ class Dataset:
 
 			# Finally, if we are dealing with the reference "1" value, set the response variable
 			# column to 1
-			if row[response_variable_column] == response_variable_1_value:
+			if row[self.response_variable_column] == response_variable_1_value:
 				feature_matrix[row_index][-1] = 1
 
 		return feature_matrix
