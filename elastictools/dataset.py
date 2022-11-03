@@ -96,9 +96,13 @@ class Dataset:
 				# We decide the index of the other column feature in our matrix
 				other_column_index = context_feature_count + list_index
 
+				# If we are dealing with a binary variable, set the value for its column to 1
+				# if we see the reference value
 				if self.other_column_info[other_column]["is_binary"]:
 					if row[other_column] == self.other_column_info[other_column]["reference_value"]:
 						feature_matrix[row_index][other_column_index] = 1
+				else:
+					feature_matrix[row_index][other_column_index] = row[other_column]
 
 			# Finally, if we are dealing with the reference "1" value, set the response variable
 			# column to 1
