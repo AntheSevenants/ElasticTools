@@ -14,10 +14,6 @@ class Dataset:
 		# We check whether the response variable column is binary
 		self.check_column_is_binary(response_variable_column)
 
-		# We check for each other column whether that column is binary
-		for other_column in other_columns:
-			self.check_column_is_binary(other_column, strict=False)
-
 		# We need to binarise all values of the to_binary column
 		# So we check in advance what features there will be
 		self.context_features = self.df[to_binary_column].unique().tolist()
@@ -25,6 +21,8 @@ class Dataset:
 		self.response_variable_column = response_variable_column
 		self.to_binary_column = to_binary_column
 		self.other_columns = other_columns
+
+		self.set_other_column_info()
 
 	def check_column_exists(self, column):
 		if not column in self.df.columns:
@@ -45,6 +43,18 @@ class Dataset:
 		elif not strict and message:
 			warnings.warn(message)
 
+	def set_other_column_info(self):
+		self.other_column_info = {}
+		for other_column in self.other_columns:
+			values = self.df[other_column].unique()
+			is_binary = len(values) == 2
+			reference_value = None
+			if is_binary:
+				reference_value = values[1]
+
+			self.other_column_info[other_column] = { "is_binary": is_binary,
+													 "reference_value": reference_value }
+
 	def as_matrix(self, response_variable_1_value=None):
 		response_variable_values = self.df[self.response_variable_column].unique()
 
@@ -58,12 +68,13 @@ class Dataset:
 
 		# What is the total number of features?
 		context_feature_count = len(self.context_features)
+		other_columns_count = len(self.other_columns)
 
 		# The total features consists of...
 		# - the response variable
 		# - the binary features
-		# - ...
-		total_feature_count = 1 + context_feature_count
+		# - the other columns
+		total_feature_count = context_feature_count + other_columns_count + 1
 
 		# Create the matrix
 		# Size: dataframe rows X total feature count
@@ -79,6 +90,15 @@ class Dataset:
 
 			# We then set the value for that column to 1 (= "this feature is present")
 			feature_matrix[row_index][to_binary_index]
+
+			# We also go over the "other columns", they have values too
+			for list_index, other_column in enumerate(self.other_columns):
+				# We decide the index of the other column feature in our matrix
+				other_column_index = context_feature_count + list_index
+
+				if self.other_column_info[other_column]["is_binary"]:
+					if row[other_column] == self.other_column_info[other_column]["reference_value"]:
+						feature_matrix[row_index][other_column_index] = 1
 
 			# Finally, if we are dealing with the reference "1" value, set the response variable
 			# column to 1
