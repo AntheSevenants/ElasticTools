@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
 
+import warnings
+
 class Dataset:
 	def __init__(self, df, response_variable_column, to_binary_column, other_columns=[]):
 		self.df = df
@@ -12,24 +14,36 @@ class Dataset:
 		# We check whether the response variable column is binary
 		self.check_column_is_binary(response_variable_column)
 
+		# We check for each other column whether that column is binary
+		for other_column in other_columns:
+			self.check_column_is_binary(other_column, strict=False)
+
 		# We need to binarise all values of the to_binary column
 		# So we check in advance what features there will be
 		self.context_features = self.df[to_binary_column].unique().tolist()
 
 		self.response_variable_column = response_variable_column
 		self.to_binary_column = to_binary_column
+		self.other_columns = other_columns
 
 	def check_column_exists(self, column):
 		if not column in self.df.columns:
 			raise Exception(f"Column '{column}' is not part of the supplied dataframe.")
 
-	def check_column_is_binary(self, column):
+	def check_column_is_binary(self, column, strict=True):
 		values = self.df[column].unique()
 
+		message = False
+
 		if len(values) < 2:
-			raise Exception(f"Column '{column} contains less than two unique values")
+			message = f"Column '{column}' contains less than two unique values"
 		elif len(values) > 2:
-			raise Exception(f"Column '{column} contains more than two unique values")
+			message = f"Column '{column}' contains more than two unique values"
+
+		if strict and message:
+			raise Exception(message)
+		elif not strict and message:
+			warnings.warn(message)
 
 	def as_matrix(self, response_variable_1_value=None):
 		response_variable_values = self.df[self.response_variable_column].unique()
