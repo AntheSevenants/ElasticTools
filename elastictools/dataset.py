@@ -110,3 +110,15 @@ class Dataset:
 				feature_matrix[row_index][-1] = 1
 
 		return feature_matrix
+
+	def as_feature_list(self):
+		# Does this do a deep copy? Let's find out
+		feature_list = [] + self.context_features
+
+		for other_column in self.other_columns:
+			if self.other_column_info[other_column]["is_binary"]:
+				feature_list.append(f"is_{other_column}")
+			else:
+				feature_list.append(other_column)
+
+		return feature_list
