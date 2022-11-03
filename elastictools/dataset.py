@@ -89,7 +89,7 @@ class Dataset:
 			to_binary_index = self.context_features.index(to_binary_value)
 
 			# We then set the value for that column to 1 (= "this feature is present")
-			feature_matrix[row_index][to_binary_index]
+			feature_matrix[row_index][to_binary_index] = 1
 
 			# We also go over the "other columns", they have values too
 			for list_index, other_column in enumerate(self.other_columns):
